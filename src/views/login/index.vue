@@ -1,42 +1,116 @@
 <template>
   <div class="login-container">
-    <el-form class="login-form">
+    <el-form
+      class="login-form"
+      :model="loginForm"
+      :rules="loginRules"
+      ref="loginRef"
+    >
       <div class="title-container">
         <h3 class="title">用户登录</h3>
       </div>
-      <el-form-item>
+      <el-form-item prop="username">
         <span class="svg-container">
           <el-icon>
             <avatar />
           </el-icon>
         </span>
-        <el-input placeholder="username" name="username" type="text"></el-input>
+        <el-input
+          placeholder="username"
+          name="username"
+          type="text"
+          v-model="loginForm.username"
+        ></el-input>
       </el-form-item>
 
-      <el-form-item>
+      <el-form-item prop="password">
         <span class="svg-container">
           <el-icon>
             <lock />
           </el-icon>
         </span>
-        <el-input placeholder="password" name="password" type="text"></el-input>
+        <el-input
+          placeholder="password"
+          name="password"
+          v-model="loginForm.password"
+          :type="flag ? 'password' : 'text'"
+        ></el-input>
 
-        <span class="svg-container">
+        <span class="svg-container" @click="toggleIcon">
           <el-icon>
-            <View />
+            <minus v-if="flag" />
+            <View v-else />
             <!-- icon图标 -->
           </el-icon>
         </span>
       </el-form-item>
-      <el-button type="primary" style="width: 100%; margin-top: 30px"
-        >登录</el-button
+
+      <el-button
+        type="primary"
+        style="width: 100%; margin-top: 30px"
+        @click="handleLogin"
       >
+        登录{{ store.state.user.token }}
+      </el-button>
     </el-form>
   </div>
 </template>
 
 <script setup>
-import { Avatar, Lock, View } from '@element-plus/icons'
+import { passwordValdate } from './rule.js'
+import { Avatar, Lock, View, Minus } from '@element-plus/icons'
+import { ref } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+const loginForm = ref({
+  username: 'super-admin',
+  password: '123456'
+})
+// 检验逻辑
+const loginRules = ref({
+  username: [
+    {
+      required: true,
+      trigger: 'blur',
+      message: '账号必须填写'
+    }
+  ],
+  password: [
+    {
+      trigger: 'blur',
+      validator: passwordValdate
+    }
+  ]
+})
+// 切换password状态
+const flag = ref(true)
+
+// 显示密码以及图片切换逻辑
+const toggleIcon = () => {
+  flag.value = !flag.value
+}
+
+const loginRef = ref(null)
+// 登录逻辑
+const store = useStore()
+const router = useRouter()
+const handleLogin = () => {
+  // 验证一次表达的数据是否合法
+  // console.log(loginRef)
+  loginRef.value.validate((validate) => {
+    if (!validate) {
+      return // 一个规则没有通过
+    }
+    // 验证通过执行登录逻辑 调用定义好的actions
+    store.dispatch('user/login', loginForm.value).then((res) => {
+      // 只有在登录成功的情况下 执行跳转
+      router.push({
+        name: 'Index'
+      })
+    })
+    // .catch((err) => {}) // 异步请求
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -70,7 +144,7 @@ $cursor_gray: #fff;
     padding: 160px 35px 0;
     margin: 0 auto;
     overflow: hidden;
-    ::v-deep .el-form-item {
+    :deep(.el-form-item) {
       border: 1px solid rgba(255, 255, 255, 0.1);
       background-color: rgba(0, 0, 0, 0.1);
       border-radius: 5px;

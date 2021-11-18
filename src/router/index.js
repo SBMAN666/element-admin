@@ -6,6 +6,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login
+  },
+  {
+    path: '/',
+    name: 'Index',
+    component: () => import('@/views/Layout/index.vue')
   }
   // {
   //   path: '/about',
